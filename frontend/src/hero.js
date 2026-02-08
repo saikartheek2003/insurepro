@@ -3,6 +3,10 @@ import axios from "axios";
 import { useAuth } from "./AuthContext";
 import { useNavigate } from "react-router-dom";
 
+ const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+
+const HeroSection = ({ navigateTo, isLoggedIn }) => {
+
 const HeroSection = ({ navigateTo, isLoggedIn }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -23,7 +27,7 @@ const HeroSection = ({ navigateTo, isLoggedIn }) => {
       setLoading(true);
       setError("");
       
-      const response = await axios.get("http://localhost:5000/api/user-policies", { 
+      const response = await axios.get(`${API_BASE_URL}/user-policies`, { 
         withCredentials: true 
       });
       
@@ -1105,5 +1109,6 @@ const HeroSection = ({ navigateTo, isLoggedIn }) => {
     </section>
   );
 };
+}
 
 export default HeroSection;

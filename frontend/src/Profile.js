@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "./AuthContext";
 
+// Centralized API URL for production and local development
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+
 const Profile = ({ navigateTo, onLogout }) => {
   const { 
     user, 
@@ -32,7 +35,8 @@ const Profile = ({ navigateTo, onLogout }) => {
       setLoading(true);
       setError("");
 
-      const response = await fetch("http://localhost:5000/api/user-policies", {
+      // Updated to use dynamic API_BASE_URL
+      const response = await fetch(`${API_BASE_URL}/user-policies`, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -76,7 +80,8 @@ const Profile = ({ navigateTo, onLogout }) => {
     }
 
     try {
-      const response = await fetch("http://localhost:5000/api/user/claims", {
+      // Updated to use dynamic API_BASE_URL
+      const response = await fetch(`${API_BASE_URL}/user/claims`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -104,7 +109,8 @@ const Profile = ({ navigateTo, onLogout }) => {
 
   const handleRenew = async (policy) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/policy-renewal/${policy.id}`, {
+      // Updated to use dynamic API_BASE_URL
+      const response = await fetch(`${API_BASE_URL}/policy-renewal/${policy.id}`, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
         credentials: "include"

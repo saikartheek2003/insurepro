@@ -3,6 +3,8 @@ import React, { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import axios from "axios";
 
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+
 const AdminProtectedRoute = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -10,7 +12,7 @@ const AdminProtectedRoute = ({ children }) => {
   useEffect(() => {
     const checkAdmin = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/admin/verify", {
+        const res = await axios.get(`${API_BASE_URL}/admin/verify`, {
           withCredentials: true,
         });
         if (res.data.authenticated) {

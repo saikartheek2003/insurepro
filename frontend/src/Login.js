@@ -2,6 +2,9 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthContext";
 
+// This constant checks if a Render variable exists; otherwise, it uses your local setup.
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+
 const Login = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -28,9 +31,9 @@ const Login = () => {
       let response;
       let data;
 
-      // Admin login (for development)
+      // Admin login (logic remains, but URL is now dynamic)
       if (email === "admin123@gmail.com" && password === "admin123") {
-        response = await fetch("http://localhost:5000/api/admin/login", {
+        response = await fetch(`${API_BASE_URL}/admin/login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
@@ -48,8 +51,8 @@ const Login = () => {
         return;
       }
 
-      // Normal user login
-      response = await fetch("http://localhost:5000/api/login", {
+      // Normal user login - Now using the dynamic API_BASE_URL
+      response = await fetch(`${API_BASE_URL}/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -154,7 +157,6 @@ const Login = () => {
           </span>
         </p>
 
-        {/* ✅ UPDATED: This now navigates to your new forgot password page */}
         <p
           onClick={() => navigate("/forgot-password")}
           style={{ marginTop: "10px", color: "#667eea", cursor: "pointer", fontWeight: 'bold' }}

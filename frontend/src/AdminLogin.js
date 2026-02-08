@@ -3,6 +3,9 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import './AdminLogin.css';
 
+// This constant automatically switches between your live Render URL and your local machine
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+
 const AdminLogin = () => {
   const [formData, setFormData] = useState({
     email: '',
@@ -26,8 +29,9 @@ const AdminLogin = () => {
     setError('');
 
     try {
+      // Using backticks and ${API_BASE_URL} to ensure it hits the live backend on Render
       const response = await axios.post(
-        "http://localhost:5000/api/admin/login",
+        `${API_BASE_URL}/admin/login`,
         {
           email: formData.email,
           password: formData.password

@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 
 const AuthContext = createContext();
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -15,7 +16,7 @@ export const AuthProvider = ({ children }) => {
         setIsLoading(true);
         setError(null);
         
-        const response = await fetch("http://localhost:5000/api/me", {
+        const response = await fetch(`${API_BASE_URL}/me`, {
           credentials: "include",
         });
 

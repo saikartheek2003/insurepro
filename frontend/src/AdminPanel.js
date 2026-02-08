@@ -3,6 +3,9 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import './AdminPanel.css';
 
+// This constant automatically switches between your live Render URL and local machine
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+
 const AdminPanel = () => {
   const [claims, setClaims] = useState([]);
   const [approvedClaims, setApprovedClaims] = useState([]);
@@ -17,64 +20,66 @@ const AdminPanel = () => {
   const navigate = useNavigate(); 
 
   useEffect(() => {
-    verifyAdminSession();
-  }, []);
+    verifyAdminSession();
+  }, []);
+
   const verifyAdminSession = async () => {
-    try {
-      const response = await axios.get("http://localhost:5000/api/admin/verify", { 
-        withCredentials: true 
-      });
-      
-      if (response.data.authenticated) {
-        setAdminInfo(response.data.admin);
-        await fetchAllClaims(); // <--- ADD THIS LINE
-      } else {
-        navigate("/admin-login");
-      }
-    } catch (err) {
-      console.error("Admin session verification failed:", err);
-      navigate("/admin-login");
-    }
-  };
-
-const fetchAllClaims = async () => {
-  try {
-    setLoading(true);
-    setError("");
-    
-    // STEP 1: Call the single endpoint that exists on your server.
-    const response = await axios.get("http://localhost:5000/api/admin/claims", { 
-      withCredentials: true 
-    });
-
-    console.log("All Claims API response:", response.data);
-
-    if (response.data.success) {
-      const allClaims = response.data.claims || [];
-
-      // STEP 2: Filter the results into the different state arrays.
-      setClaims(allClaims.filter(claim => 
-        ['Submitted', 'Pending', 'Under Review'].includes(claim.status)
-      ));
-      setApprovedClaims(allClaims.filter(claim => claim.status === 'Approved'));
-      setRejectedClaims(allClaims.filter(claim => claim.status === 'Rejected'));
-
-    } else {
-      setError("Failed to fetch claims data.");
-    }
-    
-  } catch (err) {
-    console.error("Error fetching claims:", err);
-    if (err.response?.status === 401) {
-      setError("Unauthorized access");
+    try {
+      // Updated with API_BASE_URL
+      const response = await axios.get(`${API_BASE_URL}/admin/verify`, { 
+        withCredentials: true 
+      });
+      
+      if (response.data.authenticated) {
+        setAdminInfo(response.data.admin);
+        await fetchAllClaims();
+      } else {
+        navigate("/admin-login");
+      }
+    } catch (err) {
+      console.error("Admin session verification failed:", err);
       navigate("/admin-login");
-    } else {
-      setError("Failed to fetch claims. Please try again.");
     }
-  } finally {
-    setLoading(false);
-  }
-};
+  };
+
+  const fetchAllClaims = async () => {
+    try {
+      setLoading(true);
+      setError("");
+      
+      // Updated with API_BASE_URL
+      const response = await axios.get(`${API_BASE_URL}/admin/claims`, { 
+        withCredentials: true 
+      });
+
+      console.log("All Claims API response:", response.data);
+
+      if (response.data.success) {
+        const allClaims = response.data.claims || [];
+
+        setClaims(allClaims.filter(claim => 
+          ['Submitted', 'Pending', 'Under Review'].includes(claim.status)
+        ));
+        setApprovedClaims(allClaims.filter(claim => claim.status === 'Approved'));
+        setRejectedClaims(allClaims.filter(claim => claim.status === 'Rejected'));
+
+      } else {
+        setError("Failed to fetch claims data.");
+      }
+      
+    } catch (err) {
+      console.error("Error fetching claims:", err);
+      if (err.response?.status === 401) {
+        setError("Unauthorized access");
+        navigate("/admin-login");
+      } else {
+        setError("Failed to fetch claims. Please try again.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const showToast = (message, type = 'success') => {
     setToast({ show: true, message, type });
     setTimeout(() => {
@@ -82,40 +87,36 @@ const fetchAllClaims = async () => {
     }, 4000);
   };
 
- // In AdminPanel.js
+  const handleClaimAction = async (claimId, action, rejectionReason = null) => {
+    try {
+      setProcessingClaim(claimId);
 
-const handleClaimAction = async (claimId, action, rejectionReason = null) => {
-  try {
-    setProcessingClaim(claimId);
+      // Construct the dynamic URL using API_BASE_URL
+      const url = `${API_BASE_URL}/admin/claims/${claimId}`;
 
-    // 1. Construct the correct URL with the claim ID
-    const url = `http://localhost:5000/api/admin/claims/${claimId}`;
+      const newStatus = action === 'approve' ? 'Approved' : 'Rejected';
+      const payload = {
+        status: newStatus,
+        rejectionReason: rejectionReason
+      };
 
-    // 2. Prepare the data payload with the new status
-    const newStatus = action === 'approve' ? 'Approved' : 'Rejected';
-    const payload = {
-      status: newStatus,
-      rejectionReason: rejectionReason
-    };
+      const response = await axios.put(url, payload, { withCredentials: true });
 
-    // 3. Use the correct HTTP method (PUT) and send the payload
-    const response = await axios.put(url, payload, { withCredentials: true });
-
-    if (response.data.success) {
-      // Refresh all claims to get updated data from the database
-      await fetchAllClaims();
-      showToast(`Claim has been ${newStatus.toLowerCase()}.`, "success");
-      setSelectedClaim(null);
-    } else {
-      showToast(response.data.message || `Failed to update claim`, "error");
+      if (response.data.success) {
+        await fetchAllClaims();
+        showToast(`Claim has been ${newStatus.toLowerCase()}.`, "success");
+        setSelectedClaim(null);
+      } else {
+        showToast(response.data.message || `Failed to update claim`, "error");
+      }
+    } catch (err) {
+      console.error(`Claim action error:`, err);
+      showToast(`Failed to update claim. Please try again.`, "error");
+    } finally {
+      setProcessingClaim(null);
     }
-  } catch (err) {
-    console.error(`Claim action error:`, err);
-    showToast(`Failed to update claim. Please try again.`, "error");
-  } finally {
-    setProcessingClaim(null);
-  }
-};
+  };
+
   const handleApprove = (claimId) => {
     if (window.confirm("Are you sure you want to approve this claim? An email notification will be sent to the customer.")) {
       handleClaimAction(claimId, 'approve');
@@ -131,7 +132,8 @@ const handleClaimAction = async (claimId, action, rejectionReason = null) => {
 
   const handleLogout = async () => {
     try {
-      await axios.post("http://localhost:5000/api/admin/logout", {}, { 
+      // Updated with API_BASE_URL
+      await axios.post(`${API_BASE_URL}/admin/logout`, {}, { 
         withCredentials: true 
       });
       navigate("/admin-login");
@@ -387,7 +389,6 @@ const handleClaimAction = async (claimId, action, rejectionReason = null) => {
         </div>
       </div>
 
-      {/* Tab Navigation */}
       <div className="tab-navigation">
         <button
           className={`tab-button ${activeTab === 'pending' ? 'active' : ''}`}
@@ -409,7 +410,6 @@ const handleClaimAction = async (claimId, action, rejectionReason = null) => {
         </button>
       </div>
 
-      {/* Claims Summary */}
       <div className="claims-summary">
         <div className="summary-card">
           <h3>Total Claims</h3>
@@ -429,7 +429,6 @@ const handleClaimAction = async (claimId, action, rejectionReason = null) => {
         </div>
       </div>
 
-      {/* Tab Content */}
       {activeTab === 'pending' && (
         <div className="claims-container">
           {claims.length === 0 ? (

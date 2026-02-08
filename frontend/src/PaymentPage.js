@@ -9,6 +9,9 @@ import {
 } from "./PoliciesData";
 import "./Payment.css";
 
+// Centralized API URL for production and local development
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+
 const PaymentPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -145,8 +148,9 @@ const PaymentPage = () => {
         originalPurchaseId: isRenewal ? policyDetails.id : null
       };
 
+      // UPDATED: Now uses API_BASE_URL
       const response = await axios.post(
-        "http://localhost:5000/api/purchase-policy",
+        `${API_BASE_URL}/purchase-policy`,
         policyData,
         { withCredentials: true }
       );

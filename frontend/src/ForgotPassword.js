@@ -2,6 +2,9 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
+// This constant ensures the component talks to the live backend on Render or localhost during dev
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+
 const ForgotPassword = () => {
   const [step, setStep] = useState('request'); // 'request' or 'verify'
   const [email, setEmail] = useState("");
@@ -12,7 +15,7 @@ const ForgotPassword = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  //  Request OTP
+  // Request OTP
   const handleRequestOtp = async (e) => {
     e.preventDefault();
     setMessage("");
@@ -20,7 +23,8 @@ const ForgotPassword = () => {
     setLoading(true);
 
     try {
-      const res = await axios.post("http://localhost:5000/api/request-otp", { email });
+      // Updated: Using API_BASE_URL for the live endpoint
+      const res = await axios.post(`${API_BASE_URL}/request-otp`, { email });
       setMessage(res.data.message);
       setStep('verify');
     } catch (err) {
@@ -30,7 +34,7 @@ const ForgotPassword = () => {
     }
   };
 
-  //  Verify OTP and Reset Password
+  // Verify OTP and Reset Password
   const handleResetPassword = async (e) => {
     e.preventDefault();
     setMessage("");
@@ -38,7 +42,8 @@ const ForgotPassword = () => {
     setLoading(true);
 
     try {
-      const res = await axios.post("http://localhost:5000/api/verify-otp-and-reset", { email, otp, password });
+      // Updated: Using API_BASE_URL for the live endpoint
+      const res = await axios.post(`${API_BASE_URL}/verify-otp-and-reset`, { email, otp, password });
       setMessage(res.data.message);
       // On success, redirect to login after a short delay
       setTimeout(() => navigate("/login"), 3000); 
@@ -101,6 +106,15 @@ const ForgotPassword = () => {
       {/* Display messages and errors */}
       {error && <p style={{ color: "red", marginTop: '10px' }}>{error}</p>}
       {message && <p style={{ color: "green", marginTop: '10px' }}>{message}</p>}
+      
+      <div style={{ marginTop: '15px', textAlign: 'center' }}>
+        <span 
+          onClick={() => navigate("/login")} 
+          style={{ color: "blue", cursor: "pointer", fontSize: '0.9rem' }}
+        >
+          Back to Login
+        </span>
+      </div>
     </div>
   );
 };

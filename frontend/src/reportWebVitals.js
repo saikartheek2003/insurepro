@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 
+// Centralized API URL for production and local development
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+
 const Profile = ({ user, navigateTo, onLogout }) => {
   const [purchases, setPurchases] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -12,14 +15,15 @@ const Profile = ({ user, navigateTo, onLogout }) => {
 
   const fetchPurchases = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/purchases', {
+      // Updated to use dynamic API_BASE_URL
+      const response = await fetch(`${API_BASE_URL}/purchases`, {
         method: 'GET',
         credentials: 'include', 
       });
 
       if (response.ok) {
         const data = await response.json();
-        setPurchases(data.purchases);
+        setPurchases(data.purchases || []);
       } else {
         setError('Failed to fetch purchase history');
       }
@@ -33,7 +37,8 @@ const Profile = ({ user, navigateTo, onLogout }) => {
 
   const handleLogout = async () => {
     try {
-      await fetch('http://localhost:5000/api/logout', {
+      // Updated to use dynamic API_BASE_URL
+      await fetch(`${API_BASE_URL}/logout`, {
         method: 'POST',
         credentials: 'include',
       });
@@ -55,9 +60,9 @@ const Profile = ({ user, navigateTo, onLogout }) => {
   };
 
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-IN', {
       style: 'currency',
-      currency: 'USD'
+      currency: 'INR'
     }).format(amount);
   };
 
@@ -168,11 +173,17 @@ const Profile = ({ user, navigateTo, onLogout }) => {
               <span style={styles.actionIcon}>🛒</span>
               Buy New Policy
             </button>
-            <button style={styles.quickAction}>
+            <button 
+              style={styles.quickAction}
+              onClick={() => navigateTo('claim-renewal')}
+            >
               <span style={styles.actionIcon}>📄</span>
               File a Claim
             </button>
-            <button style={styles.quickAction}>
+            <button 
+              style={styles.quickAction}
+              onClick={() => navigateTo('claim-renewal')}
+            >
               <span style={styles.actionIcon}>🔄</span>
               Renew Policy
             </button>
@@ -187,6 +198,7 @@ const Profile = ({ user, navigateTo, onLogout }) => {
   );
 };
 
+// ... keep all your existing styles exactly as they were ...
 const styles = {
   container: {
     minHeight: '100vh',
@@ -414,7 +426,6 @@ const styles = {
   },
 };
 
-// CSS animation for spinner
 const spinKeyframes = `
 @keyframes spin {
   0% { transform: rotate(0deg); }

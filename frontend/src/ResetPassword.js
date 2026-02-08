@@ -2,6 +2,9 @@
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
+// Centralized API URL for production and local development
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+
 const ResetPassword = () => {
   const { token } = useParams();
   const navigate = useNavigate();
@@ -32,7 +35,8 @@ const ResetPassword = () => {
 
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:5000/api/reset-password/${token}`, {
+      // UPDATED: Now uses API_BASE_URL instead of hardcoded localhost
+      const res = await fetch(`${API_BASE_URL}/reset-password/${token}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password }), // must match backend
@@ -66,7 +70,7 @@ const ResetPassword = () => {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          style={{ width: "100%", padding: "8px", marginBottom: "10px" }}
+          style={{ width: "100%", padding: "8px", marginBottom: "10px", boxSizing: "border-box" }}
         />
         <input
           type="password"
@@ -74,7 +78,7 @@ const ResetPassword = () => {
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
           required
-          style={{ width: "100%", padding: "8px", marginBottom: "10px" }}
+          style={{ width: "100%", padding: "8px", marginBottom: "10px", boxSizing: "border-box" }}
         />
         <button
           type="submit"
@@ -85,7 +89,9 @@ const ResetPassword = () => {
             background: "blue",
             color: "white",
             border: "none",
-            cursor: "pointer",
+            borderRadius: "4px",
+            cursor: loading ? "not-allowed" : "pointer",
+            opacity: loading ? 0.7 : 1
           }}
         >
           {loading ? "Resetting..." : "Reset Password"}
