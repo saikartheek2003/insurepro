@@ -32,7 +32,6 @@ console.log('✅ All required environment variables are loaded');
 
 /* --------------------------------- App ---------------------------------- */
 const app = express();
-const port = 5000;
 
 /* ----------------------------- Port utilities ---------------------------- */
 const isPortAvailable = (port) =>
@@ -50,6 +49,7 @@ const pool = new Pool({
   connectionString:
     process.env.DATABASE_URL ||
     'postgresql://postgres:Saichinnu%401@localhost:5432/postgres',
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
 });
 
 /* --------------------------- Admin Configuration ------------------------- */
@@ -86,10 +86,16 @@ const razorpay = new Razorpay({
 });
 
 /* ------------------------------- Middleware ------------------------------ */
+
+// REPLACED: Updated CORS to support dynamic FRONTEND_URL environment variable
 const createCorsOptions = () => ({
   origin: (origin, callback) => {
-    if (!origin || origin.startsWith('http://localhost')) callback(null, true);
-    else callback(new Error('Not allowed by CORS'));
+    const allowedOrigins = ['http://localhost:3000', process.env.FRONTEND_URL];
+    if (!origin || allowedOrigins.includes(origin) || origin.startsWith('http://localhost')) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -103,15 +109,21 @@ const setupMiddleware = () => {
   app.options('*', cors(createCorsOptions()));
   app.use('/uploads', express.static('uploads'));
   
+  // REPLACED: Added trust proxy and production cookie settings
+  if (process.env.NODE_ENV === 'production') {
+    app.set('trust proxy', 1); 
+  }
+  
   app.use(
     session({
       secret: process.env.SESSION_SECRET || 'supersecretkey_change_in_production',
       resave: false,
       saveUninitialized: false,
+      proxy: process.env.NODE_ENV === 'production',
       cookie: {
         httpOnly: true,
-        secure: false,
-        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
         maxAge: 24 * 60 * 60 * 1000,
       },
     })
@@ -143,6 +155,8 @@ const updateDatabaseSchema = async () => {
       id SERIAL PRIMARY KEY,
       email VARCHAR(255) UNIQUE NOT NULL,
       password_hash VARCHAR(255) NOT NULL,
+      otp VARCHAR(10),
+      otp_expires TIMESTAMP WITH TIME ZONE,
       reset_token VARCHAR(255),
       reset_expires TIMESTAMP WITH TIME ZONE,
       created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -211,7 +225,7 @@ try {
 } catch (alterErr) {
   console.error('⚠️ Could not alter claims table:', alterErr.message);
 }
-};                                                                                             
+};                                                                                           
 
 
 const checkDatabaseConnection = async () => {
@@ -258,12 +272,8 @@ const upload = multer({
 /* --------------------------------- Boot --------------------------------- */
 const startServer = async () => {
   try {
-    const port = 5000; // Fixed port
-    
-  
-    if (!(await isPortAvailable(port))) {
-      throw new Error(`Port ${port} is already in use. Please free up the port or change PORT in .env`);
-    }
+    // REPLACED: Dynamically bind to Render's port environment variable
+    const port = process.env.PORT || 5000; 
     
     setupMiddleware(); 
     await checkDatabaseConnection();
@@ -356,7 +366,7 @@ const startServer = async () => {
     });
 
     /* ------------------------ Forgot/Reset password -------------------------- */
-   
+    
 
 // NEW Route 1: Request an OTP
 app.post('/api/request-otp', async (req, res) => {
@@ -491,7 +501,7 @@ app.post('/api/verify-otp-and-reset', async (req, res) => {
       }
     });
 
-   
+    
     app.get('/api/admin/verify', (req, res) => {
  
   console.log('SESSION ON VERIFY:', req.session);
@@ -521,7 +531,7 @@ app.post('/api/verify-otp-and-reset', async (req, res) => {
       });
     });
 
-   
+    
     app.get('/api/admin/claims', verifyAdminSession, async (req, res) => {
       try {
         const { rows } = await pool.query(`
@@ -550,7 +560,7 @@ app.post('/api/verify-otp-and-reset', async (req, res) => {
       }
     });
 
-   
+    
     app.put('/api/admin/claims/:claimId', verifyAdminSession, async (req, res) => {
       const { claimId } = req.params;
       const { status, rejectionReason, settlementAmount } = req.body;
@@ -1015,8 +1025,8 @@ app.post('/api/verify-otp-and-reset', async (req, res) => {
       }
 
       res.status(500).json({ 
-        success: false,
-        message: 'Internal server error',
+        success: false, 
+        message: 'Internal server error', 
         error: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
       });
     });
@@ -1024,8 +1034,8 @@ app.post('/api/verify-otp-and-reset', async (req, res) => {
     // Start the server
     app.listen(port, () => {
       console.log(`\n🚀 InsurePro Server is running!`);
-      console.log(`📍 Local URL: http://localhost:${port}`);
-      console.log(`🔗 Health Check: http://localhost:${port}/api/health`);
+      console.log(`📍 Port: ${port}`);
+      console.log(`🔗 Health Check: /api/health`);
       console.log(`📧 Email configured: ${process.env.EMAIL_USER ? 'Yes' : 'No'}`);
       console.log(`💳 Razorpay configured: ${process.env.RAZORPAY_KEY_ID ? 'Yes' : 'No'}`);
       console.log(`🛡️ Admin email: ${ADMIN_CREDENTIALS.email}`);
