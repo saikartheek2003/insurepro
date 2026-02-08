@@ -3,9 +3,8 @@ import axios from "axios";
 import { useAuth } from "./AuthContext";
 import { useNavigate } from "react-router-dom";
 
- const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
-
-const HeroSection = ({ navigateTo, isLoggedIn }) => {
+// Centralized API URL for production and local development
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
 
 const HeroSection = ({ navigateTo, isLoggedIn }) => {
   const { user } = useAuth();
@@ -27,6 +26,7 @@ const HeroSection = ({ navigateTo, isLoggedIn }) => {
       setLoading(true);
       setError("");
       
+      // Updated: Using dynamic API_BASE_URL
       const response = await axios.get(`${API_BASE_URL}/user-policies`, { 
         withCredentials: true 
       });
@@ -749,12 +749,12 @@ const HeroSection = ({ navigateTo, isLoggedIn }) => {
                 className="hero-cta"
                 style={styles.heroCta}
                 onMouseEnter={(e) => {
-                  e.target.style.transform = 'translateY(-2px)';
-                  e.target.style.boxShadow = '0 10px 25px rgba(59, 130, 246, 0.4)';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 10px 25px rgba(59, 130, 246, 0.4)';
                 }}
                 onMouseLeave={(e) => {
-                  e.target.style.transform = 'translateY(0)';
-                  e.target.style.boxShadow = '0 8px 20px rgba(59, 130, 246, 0.3)';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 8px 20px rgba(59, 130, 246, 0.3)';
                 }}
               >
                 File a Claim
@@ -765,10 +765,10 @@ const HeroSection = ({ navigateTo, isLoggedIn }) => {
                 onClick={handleManageClick}
                 style={styles.secondaryBtn}
                 onMouseEnter={(e) => {
-                  e.target.style.backgroundColor = '#f3f4f6';
+                  e.currentTarget.style.backgroundColor = '#f3f4f6';
                 }}
                 onMouseLeave={(e) => {
-                  e.target.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.backgroundColor = 'transparent';
                 }}
               >
                 Manage Policies
@@ -795,10 +795,10 @@ const HeroSection = ({ navigateTo, isLoggedIn }) => {
                 onClick={handleExplorePoliciesClick}
                 style={styles.exploreMoreBtn}
                 onMouseEnter={(e) => {
-                  e.target.style.textDecoration = 'underline';
+                  e.currentTarget.style.textDecoration = 'underline';
                 }}
                 onMouseLeave={(e) => {
-                  e.target.style.textDecoration = 'none';
+                  e.currentTarget.style.textDecoration = 'none';
                 }}
               >
                 Explore More Policies →
@@ -1109,6 +1109,5 @@ const HeroSection = ({ navigateTo, isLoggedIn }) => {
     </section>
   );
 };
-}
 
 export default HeroSection;
